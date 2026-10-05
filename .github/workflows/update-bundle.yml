@@ -3,7 +3,7 @@ name: Update Revenge Bundle
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "0 * * * *"
 
 permissions:
   contents: read
@@ -18,43 +18,48 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Download latest production artifact
+      - name: Check latest production artifact
+        id: artifact
         shell: bash
         run: |
           set -euo pipefail
-
-          mkdir -p site
-
           artifacts="$(curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
             "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/artifacts?name=revenge-bundle&per_page=100")"
-
-          artifact_url="$(jq -r '
-            .artifacts
-            | map(select(.name == "revenge-bundle" and .expired == false))
-            | sort_by(.created_at)
-            | last
-            | .archive_download_url
-          ' <<< "$artifacts")"
-
-          if [[ -z "$artifact_url" || "$artifact_url" == "null" ]]; then
+          artifact_id="$(jq -r '.artifacts | map(select(.name == "revenge-bundle" and .expired == false)) | sort_by(.created_at) | last | .id' <<< "$artifacts")"
+          artifact_url="$(jq -r '.artifacts | map(select(.name == "revenge-bundle" and .expired == false)) | sort_by(.created_at) | last | .archive_download_url' <<< "$artifacts")"
+          if [[ -z "$artifact_id" || "$artifact_id" == "null" || -z "$artifact_url" || "$artifact_url" == "null" ]]; then
             echo "Production artifact 'revenge-bundle' was not found."
             exit 1
           fi
+          echo "Latest production artifact: $artifact_id"
+          published_id="$(curl -fsSL "https://cahyaxyzp.github.io/Revenge-Next/artifact-id.txt?cachebust=$(date +%s)" || true)"
+          if [[ "$published_id" == "$artifact_id" ]]; then
+            echo "Artifact $artifact_id is already published. Nothing to update."
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "A new artifact is available: $artifact_id"
+          echo "updated=true" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+          echo "artifact_url=$artifact_url" >> "$GITHUB_OUTPUT"
 
-          echo "Using latest production artifact: $artifact_url"
-
+      - name: Download production bundle
+        if: steps.artifact.outputs.updated == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site
           curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            "$artifact_url" \
+            -H "Authorization: Bearer \${{ github.token }}" \
+            "\${{ steps.artifact.outputs.artifact_url }}" \
             -o /tmp/revenge-bundle.zip
-
           unzip -j /tmp/revenge-bundle.zip "revenge.bundle" -d site/
           test -s site/revenge.bundle
-
+          printf '%s\n' "\${{ steps.artifact.outputs.artifact_id }}" > site/artifact-id.txt
           cat > site/index.html <<'EOF'
           <!doctype html>
           <html lang="en">
@@ -68,16 +73,18 @@ jobs:
           </body>
           </html>
           EOF
-
           touch site/.nojekyll
 
       - name: Configure GitHub Pages
+        if: steps.artifact.outputs.updated == 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: steps.artifact.outputs.updated == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy to GitHub Pages
+        if: steps.artifact.outputs.updated == 'true'
         uses: actions/deploy-pages@v4
