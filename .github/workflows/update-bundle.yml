@@ -55,7 +55,7 @@ jobs:
           artifacts="$(curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
-            "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/runs/\${{ steps.build.outputs.run_id }}/artifacts?name=revenge-bundle&per_page=100")"
+            "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/runs/${{ steps.build.outputs.run_id }}/artifacts?name=revenge-bundle&per_page=100")"
 
           artifact_url="$(jq -r '.artifacts[] | select(.name == "revenge-bundle" and .expired == false) | .archive_download_url' <<< "$artifacts" | head -n 1)"
 
