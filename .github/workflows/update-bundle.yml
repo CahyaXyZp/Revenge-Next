@@ -48,6 +48,7 @@ jobs:
           curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
+            -H "Authorization: Bearer ${{ github.token }}" \
             "$artifact_url" \
             -o /tmp/revenge-bundle.zip
 
