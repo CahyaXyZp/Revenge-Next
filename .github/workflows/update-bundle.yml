@@ -54,12 +54,12 @@ jobs:
           curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
-            -H "Authorization: Bearer \${{ github.token }}" \
-            "\${{ steps.artifact.outputs.artifact_url }}" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "${{ steps.artifact.outputs.artifact_url }}" \
             -o /tmp/revenge-bundle.zip
           unzip -j /tmp/revenge-bundle.zip "revenge.bundle" -d site/
           test -s site/revenge.bundle
-          printf '%s\n' "\${{ steps.artifact.outputs.artifact_id }}" > site/artifact-id.txt
+          printf '%s\n' "${{ steps.artifact.outputs.artifact_id }}" > site/artifact-id.txt
           cat > site/index.html <<'EOF'
           <!doctype html>
           <html lang="en">
