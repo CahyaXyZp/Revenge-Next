@@ -18,34 +18,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Find latest successful production build
-        id: build
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          runs="$(curl -fsSL \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2026-03-10" \
-            "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/workflows/build.yml/runs?branch=main&status=success&per_page=20")"
-
-          run_id="$(jq -r '
-            .workflow_runs
-            | map(select(.conclusion == "success"))
-            | sort_by(.run_number)
-            | last
-            | .id
-          ' <<< "$runs")"
-
-          if [[ -z "$run_id" || "$run_id" == "null" ]]; then
-            echo "No successful production build found."
-            exit 1
-          fi
-
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-          echo "Using build run: $run_id"
-
-      - name: Download production artifact
+      - name: Download latest production artifact
         shell: bash
         run: |
           set -euo pipefail
@@ -55,14 +28,22 @@ jobs:
           artifacts="$(curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2026-03-10" \
-            "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/runs/${{ steps.build.outputs.run_id }}/artifacts?name=revenge-bundle&per_page=100")"
+            "https://api.github.com/repos/revenge-mod/revenge-bundle-next/actions/artifacts?name=revenge-bundle&per_page=100")"
 
-          artifact_url="$(jq -r '.artifacts[] | select(.name == "revenge-bundle" and .expired == false) | .archive_download_url' <<< "$artifacts" | head -n 1)"
+          artifact_url="$(jq -r '
+            .artifacts
+            | map(select(.name == "revenge-bundle" and .expired == false))
+            | sort_by(.created_at)
+            | last
+            | .archive_download_url
+          ' <<< "$artifacts")"
 
           if [[ -z "$artifact_url" || "$artifact_url" == "null" ]]; then
             echo "Production artifact 'revenge-bundle' was not found."
             exit 1
           fi
+
+          echo "Using latest production artifact: $artifact_url"
 
           curl -fsSL \
             -H "Accept: application/vnd.github+json" \
