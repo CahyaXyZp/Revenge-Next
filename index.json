@@ -9,7 +9,7 @@
       "author": "CahyaXyZp",
       "icon": "SettingsIcon",
       "channels": {
-        "latest": "0.3.2"
+        "latest": "0.4.0"
       },
       "versions": {
         "0.1.0": {
@@ -68,6 +68,19 @@
           "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.3.2.zip",
           "sha256": "847a330fbd815d081e161f2b2666ddd620af3ba1c4f590db213227d865d32a96",
           "size": 5599,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "0.4.0": {
+          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.4.0.zip",
+          "sha256": "4e0a373785fabc0864a5060ad04d891e7fe3d196cd57ab73b3ae14d16f25a956",
+          "size": 7184,
           "dependencies": {
             "revenge.api": {
               "version": ">=1 <2"
