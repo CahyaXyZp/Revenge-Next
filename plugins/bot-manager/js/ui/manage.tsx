@@ -12,6 +12,7 @@ import {
 } from '../lib/api'
 import { decrement, splitPermissions } from '../lib/permissions'
 import { copy, toast } from '../lib/toast'
+import PermissionEditor from './permission-editor'
 import type { AppInfo, Result } from '../lib/api'
 
 type Props = { app: AppInfo; guildId: string; onBack: () => void }
@@ -106,10 +107,12 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 	const [query, setQuery] = React.useState('')
 	const [confirming, setConfirming] = React.useState(false)
 	const [removing, setRemoving] = React.useState(false)
+	const [editor, setEditor] = React.useState<{ commandId: string; title: string; subtitle?: string } | null>(null)
+	const [version, setVersion] = React.useState(0)
 
 	const roles = useLoad(() => fetchRoles(guildId), [guildId])
 	const index = useLoad(() => fetchCommandIndex(guildId), [guildId])
-	const permissions = useLoad(() => fetchCommandPermissions(guildId, app.id), [guildId, app.id])
+	const permissions = useLoad(() => fetchCommandPermissions(guildId, app.id), [guildId, app.id, version])
 	const webhooks = useLoad(() => fetchWebhooks(guildId), [guildId])
 
 	const roleList: any[] = roles?.ok && Array.isArray(roles.body) ? roles.body : []
@@ -195,6 +198,24 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 		}
 	}
 
+	if (editor)
+		return (
+			<PermissionEditor
+				key={editor.commandId}
+				title={editor.title}
+				subtitle={editor.subtitle}
+				guildId={guildId}
+				appId={app.id}
+				commandId={editor.commandId}
+				initial={overrides.get(editor.commandId)?.permissions ?? []}
+				withDefaults={editor.commandId === app.id}
+				roles={roleList}
+				names={{ role: roleName, user: userName, channel: channelName }}
+				onClose={() => setEditor(null)}
+				onSaved={() => setVersion(v => v + 1)}
+			/>
+		)
+
 	const backIcon = getAssetIdByName('ArrowLargeLeftIcon')
 	const TableIcon = (Design.TableRow as any).Icon
 
@@ -243,7 +264,7 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 			</Design.TableRowGroup>
 
 			<Heading>Command Permissions</Heading>
-			<Note>Who can use this application's commands, and where. Read-only for now.</Note>
+			<Note>Who can use this application's commands, and where.</Note>
 
 			{failure(permissions) && (
 				<Design.TableRowGroup>
@@ -270,6 +291,22 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 							<PermissionRow key={row.label} label={row.label} allowed={row.allowed} />
 						))}
 					</Design.TableRowGroup>
+
+					<View style={{ height: 12 }} />
+					<Design.TableRowGroup>
+						<Design.TableRow
+							label="Edit app permissions"
+							subLabel="Roles, members and channels"
+							arrow
+							onPress={() =>
+								setEditor({
+									commandId: app.id,
+									title: 'Command Permissions',
+									subtitle: `All commands of ${app.name}`,
+								})
+							}
+						/>
+					</Design.TableRowGroup>
 				</>
 			)}
 
@@ -294,6 +331,10 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 						key={command.id}
 						label={command.name}
 						subLabel={overrides.has(command.id) ? 'Custom permissions' : undefined}
+						arrow
+						onPress={() =>
+							setEditor({ commandId: command.id, title: command.name, subtitle: 'Overrides for this command' })
+						}
 					/>
 				))}
 			</Design.TableRowGroup>

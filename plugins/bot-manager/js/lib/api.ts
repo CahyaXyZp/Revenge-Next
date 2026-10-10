@@ -1,11 +1,12 @@
 import { lookupModule } from '@revenge-mod/modules/finders'
 import { withProps } from '@revenge-mod/modules/finders/filters'
 
-type RequestOptions = { url: string; query?: Record<string, unknown> }
+type RequestOptions = { url: string; query?: Record<string, unknown>; body?: unknown }
 
 type RestAPI = {
 	get(options: RequestOptions): Promise<{ body: unknown }>
 	del(options: RequestOptions): Promise<{ body: unknown }>
+	put(options: RequestOptions): Promise<{ body: unknown }>
 }
 
 let rest: RestAPI | undefined
@@ -36,7 +37,7 @@ export type Result<T = any> =
 
 /** Runs a request and returns the outcome as a value. Never throws. */
 async function call(
-	method: 'get' | 'del',
+	method: 'get' | 'del' | 'put',
 	options: RequestOptions,
 ): Promise<Result> {
 	try {
@@ -63,7 +64,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 /** Like `call`, but waits and retries when Discord answers 429 (rate limited). */
 async function callRetrying(
-	method: 'get' | 'del',
+	method: 'get' | 'del' | 'put',
 	options: RequestOptions,
 	attempts = 4,
 ): Promise<Result> {
@@ -104,6 +105,23 @@ export const fetchCommandPermissions = (guildId: string, appId: string) =>
 
 export const fetchWebhooks = (guildId: string) =>
 	call('get', { url: `/guilds/${guildId}/webhooks` })
+
+export type PermissionEntry = { id: string; type: 1 | 2 | 3; permission: boolean }
+
+/**
+ * Replaces the permission overrides of one command. Pass the application ID as `commandId` for
+ * the app-wide entry (who can use the app's commands, and where).
+ */
+export const savePermissions = (
+	guildId: string,
+	appId: string,
+	commandId: string,
+	permissions: PermissionEntry[],
+) =>
+	callRetrying('put', {
+		url: `/applications/${appId}/guilds/${guildId}/commands/${commandId}/permissions`,
+		body: { permissions },
+	})
 
 /** Deletes the integration, which also removes the bot from the server. */
 export const removeIntegration = (guildId: string, integrationId: string) =>

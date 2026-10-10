@@ -40,7 +40,7 @@ Brings **Bots and Apps** from the desktop app to **Server Settings > Integration
 appears under Webhooks and Channels Followed, with a search field and one row per installed app.
 Tap an app to open its Manage page:
 
-- Command permissions: roles and members, channels, and the app's commands (read-only for now).
+- Command permissions: roles and members, channels, and the app's commands. Tap "Edit app permissions" or a command to allow or deny roles and channels, add or remove them, and save.
 - Bot: the granted and denied permissions of the bot's role.
 - Webhooks of the app.
 - Remove App, with a confirmation step.
