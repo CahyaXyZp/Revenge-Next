@@ -36,10 +36,11 @@ Adds these rows to the channel long-press menu. They sit in the same group as Di
 
 ### Bot Manager
 
-Brings the **Bots and Apps** list from the desktop app to **Server Settings > Integrations**.
-Version 0.1 is read-only: it adds a "Bots and Apps" row under Webhooks and Channels Followed.
-Tapping it lists the apps in the server (who added them, Verified, Commands). Tap an app to copy
-its ID. The row is found by its English labels, and short toasts report what the plugin saw.
+Brings the **Bots and Apps** section from the desktop app to **Server Settings > Integrations**.
+It appears under Webhooks and Channels Followed, with a search field and one row per installed app
+(icon, who added it and when, Verified Bot, Commands). Tap an app to see its details and copy its
+IDs or invite link. Version 0.2 is read-only. The section is found by the English labels
+"Webhooks" and "Channels Followed", and a toast shows when it was added.
 
 ## How publishing works
 
@@ -64,8 +65,9 @@ plugins/
 │   ├── manifest.json
 │   └── js/
 │       ├── index.ts
-│       ├── features/integrations.tsx     adds the row to Integrations
-│       ├── ui/apps-sheet.tsx             the app list
+│       ├── features/integrations.tsx     adds the section to Integrations
+│       ├── ui/apps-section.tsx           search field and app rows
+│       ├── ui/app-sheet.tsx              details of one app
 │       └── lib/                          REST call, toast helpers
 └── server-tweaks/
     ├── manifest.json

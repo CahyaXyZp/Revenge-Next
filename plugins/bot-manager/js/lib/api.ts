@@ -31,57 +31,70 @@ export async function fetchIntegrations(guildId: string): Promise<unknown> {
 }
 
 export type AppInfo = {
+	/** Application ID. */
 	id: string
 	name: string
+	iconUrl?: string
+	botId?: string
 	addedBy?: string
-	addedAt?: string
+	addedAt?: Date
+	scopes: string[]
 	verified: boolean
+	/** The app has global commands (Discord's "Commands" badge). */
 	commands: boolean
+	raw: unknown
 }
 
 type Loose = Record<string, any>
 
+const DISCORD_EPOCH = 1420070400000
+/** Application flag APPLICATION_COMMAND_BADGE. */
+const COMMAND_BADGE = 1 << 23
+
+/** Creation time of a snowflake ID. Number precision is plenty for a date. */
+const snowflakeDate = (id: string) =>
+	new Date(Math.floor(Number(id) / 4194304) + DISCORD_EPOCH)
+
 /**
  * Turns the integrations response into a list of apps.
  *
- * The exact shape is not documented, so this accepts a plain array or an object with
- * `integrations` and `applications`, and skips entries that are not bots or apps.
+ * Only integrations of type `discord` that carry an application are apps. The response has no
+ * "added on" field, so the date comes from the integration ID.
  */
 export function readApps(body: unknown): AppInfo[] {
-	const data = body as Loose | Loose[] | undefined
-	const integrations: Loose[] = Array.isArray(data)
-		? data
-		: (data?.integrations ?? [])
-	const applications: Loose[] = Array.isArray(data) ? [] : (data?.applications ?? [])
+	const items: Loose[] = Array.isArray(body) ? body : []
 
-	const apps = new Map<string, AppInfo>()
+	const apps: AppInfo[] = []
 
-	for (const item of integrations) {
+	for (const item of items) {
 		const application = item.application
-		if (!application && item.type !== 'discord') continue
+		if (item.type !== 'discord' || !application) continue
 
-		const id = String(application?.id ?? item.id)
-		apps.set(id, {
-			id,
-			name: String(application?.name ?? item.name ?? id),
-			addedBy: item.user?.global_name ?? item.user?.username,
-			addedAt: item.synced_at ?? item.created_at,
-			verified: Boolean(application?.verified ?? application?.is_verified),
-			commands: Boolean(item.command_count ?? application?.command_count),
-		})
-	}
-
-	for (const application of applications) {
 		const id = String(application.id)
-		if (apps.has(id)) continue
+		const icon = application.icon ?? application.bot?.avatar
 
-		apps.set(id, {
+		apps.push({
 			id,
-			name: String(application.name ?? id),
-			verified: Boolean(application.verified ?? application.is_verified),
-			commands: Boolean(application.command_count),
+			name: String(application.name ?? item.name ?? id),
+			iconUrl: icon
+				? `https://cdn.discordapp.com/${
+						application.icon ? 'app-icons' : `avatars`
+					}/${application.icon ? id : application.bot?.id}/${icon}.png?size=64`
+				: undefined,
+			botId: application.bot?.id,
+			addedBy: item.user?.global_name ?? item.user?.username,
+			addedAt: item.id ? snowflakeDate(String(item.id)) : undefined,
+			scopes: Array.isArray(item.scopes) ? item.scopes : [],
+			verified: Boolean(application.is_verified),
+			commands: ((application.flags ?? 0) & COMMAND_BADGE) !== 0,
+			raw: item,
 		})
 	}
 
-	return [...apps.values()].sort((a, b) => a.name.localeCompare(b.name))
+	return apps.sort((a, b) => a.name.localeCompare(b.name))
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+export const formatDate = (date: Date) =>
+	`${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
