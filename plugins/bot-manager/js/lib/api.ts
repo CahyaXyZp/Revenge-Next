@@ -30,7 +30,9 @@ export async function fetchIntegrations(guildId: string): Promise<unknown> {
 	return response.body
 }
 
-export type Result<T = any> = { ok: true; body: T } | { ok: false; error: string }
+export type Result<T = any> =
+	| { ok: true; body: T }
+	| { ok: false; error: string; retryAfter?: number }
 
 /** Runs a request and returns the outcome as a value. Never throws. */
 async function call(
@@ -45,14 +47,57 @@ async function call(
 		const message =
 			error?.body?.message ?? error?.message ?? error?.text ?? JSON.stringify(error)
 
-		return { ok: false, error: `${status}${String(message).slice(0, 200)}` }
+		const retryAfter = Number(error?.body?.retry_after)
+
+		return {
+			ok: false,
+			error: `${status}${String(message).slice(0, 200)}`,
+			retryAfter: Number.isFinite(retryAfter) ? retryAfter : undefined,
+		}
 	}
 }
 
 export const fetchRoles = (guildId: string) => call('get', { url: `/guilds/${guildId}/roles` })
 
-export const fetchCommandIndex = (guildId: string) =>
-	call('get', { url: `/guilds/${guildId}/application-command-index` })
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+/** Like `call`, but waits and retries when Discord answers 429 (rate limited). */
+async function callRetrying(
+	method: 'get' | 'del',
+	options: RequestOptions,
+	attempts = 4,
+): Promise<Result> {
+	let result = await call(method, options)
+
+	for (let i = 1; i < attempts && !result.ok && result.error.startsWith('429'); i++) {
+		const wait = Math.min(Math.max(result.retryAfter ?? 2, 1), 15)
+		await sleep(wait * 1000 + 250)
+		result = await call(method, options)
+	}
+
+	return result
+}
+
+const indexCache = new Map<string, { at: number; result: Promise<Result> }>()
+
+/**
+ * The command index is rate limited hard, so requests are shared per server, retried on 429 and
+ * a good answer is reused for a minute.
+ */
+export function fetchCommandIndex(guildId: string): Promise<Result> {
+	const cached = indexCache.get(guildId)
+	if (cached && Date.now() - cached.at < 60_000) return cached.result
+
+	const result = callRetrying('get', {
+		url: `/guilds/${guildId}/application-command-index`,
+	}).then(r => {
+		if (!r.ok) indexCache.delete(guildId)
+		return r
+	})
+
+	indexCache.set(guildId, { at: Date.now(), result })
+	return result
+}
 
 export const fetchCommandPermissions = (guildId: string, appId: string) =>
 	call('get', { url: `/applications/${appId}/guilds/${guildId}/commands/permissions` })

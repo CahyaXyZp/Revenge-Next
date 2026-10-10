@@ -5,7 +5,7 @@
 	"description": "Adds the Bots and Apps list from desktop to Server Settings > Integrations.",
 	"author": "CahyaXyZp",
 	"icon": "SettingsIcon",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"dependencies": {
 		"revenge.api": {
 			"version": ">=1 <2"
