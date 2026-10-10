@@ -34,6 +34,13 @@ Adds these rows to the channel long-press menu. They sit in the same group as Di
 - **Copy Category Name**: channel categories.
 - **Copy Channel Description**: channels that have a topic.
 
+### Bot Manager
+
+Brings the **Bots and Apps** list from the desktop app to **Server Settings > Integrations**.
+Version 0.1 is read-only: it adds a "Bots and Apps" row under Webhooks and Channels Followed.
+Tapping it lists the apps in the server (who added them, Verified, Commands). Tap an app to copy
+its ID. The row is found by its English labels, and short toasts report what the plugin saw.
+
 ## How publishing works
 
 - A push to `next-plugins` that touches `plugins/` runs `build-plugins.yml`. It bundles every
@@ -53,6 +60,13 @@ Adds these rows to the channel long-press menu. They sit in the same group as Di
 
 ```
 plugins/
+├── bot-manager/
+│   ├── manifest.json
+│   └── js/
+│       ├── index.ts
+│       ├── features/integrations.tsx     adds the row to Integrations
+│       ├── ui/apps-sheet.tsx             the app list
+│       └── lib/                          REST call, toast helpers
 └── server-tweaks/
     ├── manifest.json
     └── js/
