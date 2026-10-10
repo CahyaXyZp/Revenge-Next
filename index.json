@@ -13,7 +13,7 @@
       },
       "versions": {
         "1.0.0": {
-          "url": "https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/pool/cahyaxyzp.server-tweaks@1.0.0.zip",
+          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.server-tweaks@1.0.0.zip",
           "sha256": "504f9e3a946cb94ffdd969f52003685d323b74d74fe41912dc821bc9001499ca",
           "size": 1539,
           "dependencies": {
