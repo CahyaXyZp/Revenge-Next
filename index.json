@@ -5,17 +5,30 @@
   "plugins": {
     "cahyaxyzp.server-tweaks": {
       "name": "Server Tweaks",
-      "description": "Small quality-of-life tweaks for servers and channels. Adds a Copy Channel Name button to the channel long-press menu.",
+      "description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu.",
       "author": "CahyaXyZp",
       "icon": "CopyIcon",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "1.1.0"
       },
       "versions": {
         "1.0.0": {
           "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.server-tweaks@1.0.0.zip",
           "sha256": "504f9e3a946cb94ffdd969f52003685d323b74d74fe41912dc821bc9001499ca",
           "size": 1539,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.1.0": {
+          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.server-tweaks@1.1.0.zip",
+          "sha256": "66507c0a998355b18572ee63853d9ca454fd86e9e09e1ed1c5173f00371f11a9",
+          "size": 1876,
           "dependencies": {
             "revenge.api": {
               "version": ">=1 <2"
