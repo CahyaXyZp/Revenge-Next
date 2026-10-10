@@ -35,6 +35,13 @@ function useLoad(load: () => Promise<Result>, deps: unknown[]): Result | undefin
 	return result
 }
 
+/** JSON.stringify replacer: debug info is pasted into bug reports, so webhook secrets stay out. */
+function redactSecrets(key: string, value: unknown) {
+	return key === 'token' || key === 'url' && typeof value === 'string' && value.includes('/api/webhooks/')
+		? '[redacted]'
+		: value
+}
+
 function Heading(props: { children: string }) {
 	const Text = Design.Text as any
 
@@ -170,7 +177,7 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 
 	const debug = () =>
 		copy(
-			JSON.stringify({ app: app.raw, roles, index: index && (index.ok ? 'ok' : index), permissions, webhooks }, null, 1),
+			JSON.stringify({ app: app.raw, roles, index: index && (index.ok ? 'ok' : index), permissions, webhooks }, redactSecrets, 1),
 			'Debug info copied',
 		)
 
