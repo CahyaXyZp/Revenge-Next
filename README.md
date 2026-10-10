@@ -7,9 +7,9 @@ My Revenge Next plugins. This is the `next-plugins` branch of
 
 | Branch | What it holds |
 | --- | --- |
-| `main` | the Revenge bundle workflow (`update-bundle.yml`, deployed to GitHub Pages). Not changed by plugins. |
+| `main` | the Revenge bundle workflow (`update-bundle.yml`). It deploys the bundle **and** the plugin repository to GitHub Pages. |
 | `next-plugins` | the plugin sources and the build workflow. This branch. |
-| `plugin-dist` | built plugin zips and `index.json`. Written by the workflow, never edit it by hand. |
+| `plugin-dist` | built plugin zips and `index.json`. Written by the build workflow, never edit it by hand. Copied into the Pages site by `update-bundle.yml`. |
 
 ## Install the plugins
 
@@ -17,7 +17,7 @@ In Revenge Next, open **Settings → Plugins → Advanced**, add this repository
 browse and install:
 
 ```
-https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/index.json
+https://cahyaxyzp.github.io/Revenge-Next/index.json
 ```
 
 ## Plugins
@@ -39,9 +39,10 @@ Small quality-of-life tweaks for servers and channels.
   is higher than the one installed.
 - Pull requests build the plugins without publishing, and attach the result to the run as the
   `plugin-repository` artifact.
-- The workflow never touches GitHub Pages, so it cannot affect the bundle.
-- raw.githubusercontent.com caches files for a few minutes, so a new release can take a little
-  while to show up.
+- After publishing, the workflow starts `update-bundle.yml` on `main`. That workflow copies
+  `plugin-dist` into the same Pages site as `revenge.bundle`, so both are always deployed together.
+  It also redeploys when `plugin-dist` has a new commit, even if the bundle did not change.
+- GitHub Pages can take a minute or two to show a new release.
 
 ## Layout
 

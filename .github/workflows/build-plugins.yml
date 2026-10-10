@@ -1,10 +1,11 @@
 name: Build Plugins
 
 # Builds the plugins under plugins/ and publishes them as a Revenge plugin repository on the
-# `plugin-dist` branch. The branch is served by raw.githubusercontent.com, so this workflow never
-# touches GitHub Pages and cannot affect the Revenge bundle deployed by update-bundle.yml.
+# `plugin-dist` branch. This workflow does not deploy anything to GitHub Pages itself. After
+# publishing it starts update-bundle.yml (on main), which copies the `plugin-dist` branch into the
+# same Pages site as the Revenge bundle.
 #
-# The plugin sources live on the `next-plugins` branch. `main` only holds the bundle workflow.
+# The plugin sources live on the `next-plugins` branch. `main` holds the bundle workflow.
 #
 # - push to next-plugins:  build and publish
 # - pull request:          build only, so a broken plugin is caught before merging
@@ -30,6 +31,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('plugins-pr-{0}', github.event.number) || 'plugin-dist' }}
@@ -37,7 +39,7 @@ concurrency:
 
 env:
   PLUGIN_BRANCH: plugin-dist
-  PUBLIC_URL: https://raw.githubusercontent.com/${{ github.repository }}/plugin-dist
+  PUBLIC_URL: https://cahyaxyzp.github.io/Revenge-Next
 
 jobs:
   build:
@@ -71,3 +73,9 @@ jobs:
         env:
           PLUGIN_REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
         run: bash .github/scripts/publish-plugin-branch.sh build-out "$PUBLIC_URL"
+
+      - name: Deploy the site (bundle and plugins)
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run update-bundle.yml --ref main --repo "${{ github.repository }}"
