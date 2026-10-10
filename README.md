@@ -17,7 +17,7 @@ In Revenge Next, open **Settings → Plugins → Advanced**, add this repository
 browse and install:
 
 ```
-https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/
+https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/index.json
 ```
 
 ## Plugins
