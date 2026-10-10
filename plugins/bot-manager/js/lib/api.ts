@@ -1,11 +1,11 @@
 import { lookupModule } from '@revenge-mod/modules/finders'
 import { withProps } from '@revenge-mod/modules/finders/filters'
 
+type RequestOptions = { url: string; query?: Record<string, unknown> }
+
 type RestAPI = {
-	get(options: {
-		url: string
-		query?: Record<string, unknown>
-	}): Promise<{ body: unknown }>
+	get(options: RequestOptions): Promise<{ body: unknown }>
+	del(options: RequestOptions): Promise<{ body: unknown }>
 }
 
 let rest: RestAPI | undefined
@@ -14,7 +14,7 @@ let rest: RestAPI | undefined
 function getRest(): RestAPI {
 	if (rest) return rest
 
-	const [module] = lookupModule(withProps<RestAPI>('getAPIBaseURL', 'get'))
+	const [module] = lookupModule(withProps<RestAPI>('getAPIBaseURL', 'get', 'del'))
 	if (!module) throw new Error('Discord REST module not found')
 
 	return (rest = module)
@@ -30,9 +30,45 @@ export async function fetchIntegrations(guildId: string): Promise<unknown> {
 	return response.body
 }
 
+export type Result<T = any> = { ok: true; body: T } | { ok: false; error: string }
+
+/** Runs a request and returns the outcome as a value. Never throws. */
+async function call(
+	method: 'get' | 'del',
+	options: RequestOptions,
+): Promise<Result> {
+	try {
+		const response = await getRest()[method](options)
+		return { ok: true, body: response.body }
+	} catch (error: any) {
+		const status = error?.status ? `${error.status}: ` : ''
+		const message =
+			error?.body?.message ?? error?.message ?? error?.text ?? JSON.stringify(error)
+
+		return { ok: false, error: `${status}${String(message).slice(0, 200)}` }
+	}
+}
+
+export const fetchRoles = (guildId: string) => call('get', { url: `/guilds/${guildId}/roles` })
+
+export const fetchCommandIndex = (guildId: string) =>
+	call('get', { url: `/guilds/${guildId}/application-command-index` })
+
+export const fetchCommandPermissions = (guildId: string, appId: string) =>
+	call('get', { url: `/applications/${appId}/guilds/${guildId}/commands/permissions` })
+
+export const fetchWebhooks = (guildId: string) =>
+	call('get', { url: `/guilds/${guildId}/webhooks` })
+
+/** Deletes the integration, which also removes the bot from the server. */
+export const removeIntegration = (guildId: string, integrationId: string) =>
+	call('del', { url: `/guilds/${guildId}/integrations/${integrationId}` })
+
 export type AppInfo = {
 	/** Application ID. */
 	id: string
+	/** ID of the integration, used to remove the app. */
+	integrationId: string
 	name: string
 	iconUrl?: string
 	botId?: string
@@ -75,6 +111,7 @@ export function readApps(body: unknown): AppInfo[] {
 
 		apps.push({
 			id,
+			integrationId: String(item.id),
 			name: String(application.name ?? item.name ?? id),
 			iconUrl: icon
 				? `https://cdn.discordapp.com/${

@@ -1,8 +1,6 @@
-import { ActionSheetActionCreators } from '@revenge-mod/discord/actions'
 import { Design } from '@revenge-mod/discord/design'
 import { React, ReactNative } from '@revenge-mod/react'
 import { fetchIntegrations, formatDate, readApps } from '../lib/api'
-import AppSheet from './app-sheet'
 import type { AppInfo } from '../lib/api'
 
 type State =
@@ -22,18 +20,15 @@ const subLabel = (app: AppInfo) =>
 		.filter(Boolean)
 		.join('\n')
 
-const manage = (app: AppInfo) =>
-	ActionSheetActionCreators.openLazy(
-		Promise.resolve({ default: AppSheet }),
-		'BotManagerApp',
-		{ app },
-	)
-
 /**
  * The "Bots and Apps" section of Server Settings > Integrations: a search field and one row
- * per installed app. Tap a row to manage the app.
+ * per installed app. Tap a row to open the Manage page of the app.
  */
-export default function AppsSection({ guildId }: { guildId: string }) {
+export default function AppsSection(props: {
+	guildId: string
+	onManage: (app: AppInfo) => void
+}) {
+	const { guildId, onManage } = props
 	const { Image, View } = ReactNative
 	const [state, setState] = React.useState<State>({ status: 'loading' })
 	const [query, setQuery] = React.useState('')
@@ -103,7 +98,7 @@ export default function AppsSection({ guildId }: { guildId: string }) {
 							) : undefined
 						}
 						arrow
-						onPress={() => manage(app)}
+						onPress={() => onManage(app)}
 					/>
 				))}
 			</Design.TableRowGroup>

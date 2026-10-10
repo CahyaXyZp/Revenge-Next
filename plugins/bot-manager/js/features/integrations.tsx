@@ -1,9 +1,8 @@
 import { Stores } from '@revenge-mod/discord/flux'
 import { Design } from '@revenge-mod/discord/design'
-import { React } from '@revenge-mod/react'
 import { afterJSX } from '@revenge-mod/react/jsx-runtime'
 import { toast } from '../lib/toast'
-import AppsSection from '../ui/apps-section'
+import IntegrationsGate from '../ui/gate'
 import type { Cleanup } from '../lib/cleanup'
 import type { ReactElement } from 'react'
 
@@ -12,7 +11,8 @@ import type { ReactElement } from 'react'
  * Channels Followed.
  *
  * The screen is found by the group that holds those two rows. Their labels are matched in
- * English only. The section goes right after that group, in the same place as on desktop.
+ * English only. The section goes right after that group, in the same place as on desktop. The gate component
+ * can swap the whole content for the Manage page of an app.
  */
 
 const SECTION_KEY = 'bot-manager-section'
@@ -41,10 +41,11 @@ export function registerIntegrationsRow(cleanup: Cleanup) {
 			lastToast = now
 
 			return (
-				<React.Fragment key={element.key ?? undefined}>
-					{element}
-					<AppsSection key={SECTION_KEY} guildId={guildId} />
-				</React.Fragment>
+				<IntegrationsGate
+					key={element.key ?? SECTION_KEY}
+					original={element}
+					guildId={guildId}
+				/>
 			) as ReactElement<any>
 		}),
 	)

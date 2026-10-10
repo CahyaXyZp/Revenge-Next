@@ -36,11 +36,17 @@ Adds these rows to the channel long-press menu. They sit in the same group as Di
 
 ### Bot Manager
 
-Brings the **Bots and Apps** section from the desktop app to **Server Settings > Integrations**.
-It appears under Webhooks and Channels Followed, with a search field and one row per installed app
-(icon, who added it and when, Verified Bot, Commands). Tap an app to see its details and copy its
-IDs or invite link. Version 0.2 is read-only. The section is found by the English labels
-"Webhooks" and "Channels Followed", and a toast shows when it was added.
+Brings **Bots and Apps** from the desktop app to **Server Settings > Integrations**. The section
+appears under Webhooks and Channels Followed, with a search field and one row per installed app.
+Tap an app to open its Manage page:
+
+- Command permissions: roles and members, channels, and the app's commands (read-only for now).
+- Bot: the granted and denied permissions of the bot's role.
+- Webhooks of the app.
+- Remove App, with a confirmation step.
+- Copy App ID, Copy Invite Link and a debug dump.
+
+The screen is found by the English labels "Webhooks" and "Channels Followed".
 
 ## How publishing works
 
@@ -65,10 +71,11 @@ plugins/
 │   ├── manifest.json
 │   └── js/
 │       ├── index.ts
-│       ├── features/integrations.tsx     adds the section to Integrations
+│       ├── features/integrations.tsx     hooks the Integrations screen
+│       ├── ui/gate.tsx                   list or Manage page
 │       ├── ui/apps-section.tsx           search field and app rows
-│       ├── ui/app-sheet.tsx              details of one app
-│       └── lib/                          REST call, toast helpers
+│       ├── ui/manage.tsx                 Manage page of one app
+│       └── lib/                          REST calls, permission bits, toast helpers
 └── server-tweaks/
     ├── manifest.json
     └── js/
