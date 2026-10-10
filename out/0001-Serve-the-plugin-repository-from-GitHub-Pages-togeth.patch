@@ -1,0 +1,104 @@
+From 292ea20a821d8356e768af5c5feac4a80cc55630 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 10 Oct 2026 14:42:33 +0700
+Subject: [PATCH] Serve the plugin repository from GitHub Pages together with
+ the bundle
+
+The plugin index now points at the Pages site. After publishing to plugin-dist the
+workflow starts update-bundle.yml, which deploys the bundle and the plugins together.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01NwjXFg8HRYPv6nPqcEth1e
+---
+ .github/workflows/build-plugins.yml | 16 ++++++++++++----
+ README.md                           | 13 +++++++------
+ 2 files changed, 19 insertions(+), 10 deletions(-)
+
+diff --git a/.github/workflows/build-plugins.yml b/.github/workflows/build-plugins.yml
+index 4327331..7bba367 100644
+--- a/.github/workflows/build-plugins.yml
++++ b/.github/workflows/build-plugins.yml
+@@ -1,10 +1,11 @@
+ name: Build Plugins
+ 
+ # Builds the plugins under plugins/ and publishes them as a Revenge plugin repository on the
+-# `plugin-dist` branch. The branch is served by raw.githubusercontent.com, so this workflow never
+-# touches GitHub Pages and cannot affect the Revenge bundle deployed by update-bundle.yml.
++# `plugin-dist` branch. This workflow does not deploy anything to GitHub Pages itself. After
++# publishing it starts update-bundle.yml (on main), which copies the `plugin-dist` branch into the
++# same Pages site as the Revenge bundle.
+ #
+-# The plugin sources live on the `next-plugins` branch. `main` only holds the bundle workflow.
++# The plugin sources live on the `next-plugins` branch. `main` holds the bundle workflow.
+ #
+ # - push to next-plugins:  build and publish
+ # - pull request:          build only, so a broken plugin is caught before merging
+@@ -30,6 +31,7 @@ on:
+ 
+ permissions:
+   contents: write
++  actions: write
+ 
+ concurrency:
+   group: ${{ github.event_name == 'pull_request' && format('plugins-pr-{0}', github.event.number) || 'plugin-dist' }}
+@@ -37,7 +39,7 @@ concurrency:
+ 
+ env:
+   PLUGIN_BRANCH: plugin-dist
+-  PUBLIC_URL: https://raw.githubusercontent.com/${{ github.repository }}/plugin-dist
++  PUBLIC_URL: https://cahyaxyzp.github.io/Revenge-Next
+ 
+ jobs:
+   build:
+@@ -71,3 +73,9 @@ jobs:
+         env:
+           PLUGIN_REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+         run: bash .github/scripts/publish-plugin-branch.sh build-out "$PUBLIC_URL"
++
++      - name: Deploy the site (bundle and plugins)
++        if: github.event_name != 'pull_request'
++        env:
++          GH_TOKEN: ${{ github.token }}
++        run: gh workflow run update-bundle.yml --ref main --repo "${{ github.repository }}"
+diff --git a/README.md b/README.md
+index 0c551a7..8ddbe80 100644
+--- a/README.md
++++ b/README.md
+@@ -7,9 +7,9 @@ My Revenge Next plugins. This is the `next-plugins` branch of
+ 
+ | Branch | What it holds |
+ | --- | --- |
+-| `main` | the Revenge bundle workflow (`update-bundle.yml`, deployed to GitHub Pages). Not changed by plugins. |
++| `main` | the Revenge bundle workflow (`update-bundle.yml`). It deploys the bundle **and** the plugin repository to GitHub Pages. |
+ | `next-plugins` | the plugin sources and the build workflow. This branch. |
+-| `plugin-dist` | built plugin zips and `index.json`. Written by the workflow, never edit it by hand. |
++| `plugin-dist` | built plugin zips and `index.json`. Written by the build workflow, never edit it by hand. Copied into the Pages site by `update-bundle.yml`. |
+ 
+ ## Install the plugins
+ 
+@@ -17,7 +17,7 @@ In Revenge Next, open **Settings → Plugins → Advanced**, add this repository
+ browse and install:
+ 
+ ```
+-https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/
++https://cahyaxyzp.github.io/Revenge-Next/index.json
+ ```
+ 
+ ## Plugins
+@@ -39,9 +39,10 @@ Small quality-of-life tweaks for servers and channels.
+   is higher than the one installed.
+ - Pull requests build the plugins without publishing, and attach the result to the run as the
+   `plugin-repository` artifact.
+-- The workflow never touches GitHub Pages, so it cannot affect the bundle.
+-- raw.githubusercontent.com caches files for a few minutes, so a new release can take a little
+-  while to show up.
++- After publishing, the workflow starts `update-bundle.yml` on `main`. That workflow copies
++  `plugin-dist` into the same Pages site as `revenge.bundle`, so both are always deployed together.
++  It also redeploys when `plugin-dist` has a new commit, even if the bundle did not change.
++- GitHub Pages can take a minute or two to show a new release.
+ 
+ ## Layout
+ 
+-- 
+2.43.0
+

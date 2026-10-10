@@ -13,11 +13,11 @@ My Revenge Next plugins. This is the `next-plugins` branch of
 
 ## Install the plugins
 
-In Revenge Next, open **Settings → Plugins → Advanced**, add this repository URL, then press **+** to
+In Revenge Next, open **Settings → Plugins → Advanced**, add this repository URL (without `index.json`), then press **+** to
 browse and install:
 
 ```
-https://cahyaxyzp.github.io/Revenge-Next/index.json
+https://cahyaxyzp.github.io/Revenge-Next
 ```
 
 ## Plugins
