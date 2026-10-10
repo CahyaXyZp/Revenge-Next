@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "dev.servertweaks.server-tweaks",
+	"name": "Server Tweaks",
+	"description": "Small quality-of-life tweaks for servers and channels. Adds a Copy Channel Name button to the channel long-press menu.",
+	"author": "Your Name",
+	"icon": "CopyIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"revenge.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
