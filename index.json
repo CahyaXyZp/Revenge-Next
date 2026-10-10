@@ -3,6 +3,30 @@
   "name": "Next Plugins",
   "description": "Server and channel quality-of-life plugins for Revenge Next.",
   "plugins": {
+    "cahyaxyzp.bot-manager": {
+      "name": "Bot Manager",
+      "description": "Adds the Bots and Apps list from desktop to Server Settings > Integrations.",
+      "author": "CahyaXyZp",
+      "icon": "SettingsIcon",
+      "channels": {
+        "latest": "0.1.0"
+      },
+      "versions": {
+        "0.1.0": {
+          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.1.0.zip",
+          "sha256": "a9090e3a867b91561262050c50c404742bea730b6c81485842abf6d31f08e548",
+          "size": 2294,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "cahyaxyzp.server-tweaks": {
       "name": "Server Tweaks",
       "description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu.",
