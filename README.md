@@ -1,11 +1,13 @@
 # Revenge-Next
 
-Hosts the Revenge Next bundle and my Revenge Next plugins on GitHub Pages.
+Hosts the Revenge Next bundle and my Revenge Next plugins.
 
-| What | URL |
+| What | Where |
 | --- | --- |
-| Revenge bundle | `https://cahyaxyzp.github.io/Revenge-Next/revenge.bundle` |
-| Plugin repository | `https://cahyaxyzp.github.io/Revenge-Next/plugins/` |
+| Revenge bundle | GitHub Pages, deployed by `update-bundle.yml`: `https://cahyaxyzp.github.io/Revenge-Next/revenge.bundle` |
+| Plugin repository | the `plugin-dist` branch, deployed by `build-plugins.yml`: `https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/` |
+
+The two are independent. `build-plugins.yml` never touches GitHub Pages, so it cannot affect the bundle.
 
 ## Install the plugins
 
@@ -23,17 +25,16 @@ Small quality-of-life tweaks for servers and channels.
 
 ## How publishing works
 
-One workflow, `.github/workflows/update-bundle.yml`, owns the whole Pages site, because every Pages
-deploy replaces the site.
-
-- Every 6 hours it checks for a newer production bundle and deploys when there is one.
-- Every push to `main` that touches `plugins/` rebuilds the plugin repository and deploys it.
-  If there is no new bundle, the currently published one is reused.
-- Pull requests build the plugins and validate the index without deploying. The built repository is
-  attached to the run as the `plugin-repository` artifact.
-
-**To release a plugin update, raise `version` in its `manifest.json`.** Revenge only offers an
-update when the version is higher than the one a user has installed.
+- A push to `main` that touches `plugins/` runs `build-plugins.yml`. It bundles every plugin, zips
+  each one as `<id>@<version>.zip`, adds new versions to `pool/` on the `plugin-dist` branch and
+  regenerates `index.json` from everything in the pool.
+- A version that is already on the branch is never overwritten. **To release a change, raise
+  `version` in the plugin's `manifest.json`.** Revenge also only offers an update when the version
+  is higher than the one installed.
+- Pull requests build the plugins without publishing, and attach the result to the run as the
+  `plugin-repository` artifact.
+- raw.githubusercontent.com caches files for a few minutes, so a new release can take a little
+  while to show up.
 
 ## Layout
 
@@ -45,6 +46,10 @@ plugins/
         ├── index.ts                      plugin entry
         ├── patches/actionsheet.ts        hooks Discord's long-press menus
         └── features/copy-channel-name.tsx
+.github/
+├── scripts/build-plugins.sh              build + zip + index for one run
+├── scripts/publish-plugin-branch.sh      adds new zips to plugin-dist
+└── workflows/build-plugins.yml
 ```
 
 To add a feature, create `js/features/<name>.tsx` that exports a `register...(cleanup)` function and
@@ -59,7 +64,7 @@ JS-only plugins are supported by the build script.
 ```sh
 bun install
 bun --bun run build
-bash .github/scripts/build-plugins.sh site/plugins http://<your-pc-ip>:8080/plugins
+bash .github/scripts/build-plugins.sh build-out http://<your-pc-ip>:8080
 ```
 
 ## Credits and license
