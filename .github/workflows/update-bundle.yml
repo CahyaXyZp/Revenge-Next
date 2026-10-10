@@ -34,9 +34,13 @@ jobs:
             exit 1
           fi
           echo "Latest production artifact: $artifact_id"
+          plugin_rev="$(git ls-remote "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" refs/heads/plugin-dist | cut -f1 || true)"
+          echo "Latest plugin-dist revision: ${plugin_rev:-none}"
           published_id="$(curl -fsSL "https://cahyaxyzp.github.io/Revenge-Next/artifact-id.txt?cachebust=$(date +%s)" || true)"
-          if [[ "$published_id" == "$artifact_id" ]]; then
-            echo "Artifact $artifact_id is already published. Nothing to update."
+          published_plugin_rev="$(curl -fsSL "https://cahyaxyzp.github.io/Revenge-Next/plugin-rev.txt?cachebust=$(date +%s)" || true)"
+          published_plugin_rev="${published_plugin_rev//[[:space:]]/}"
+          if [[ "$published_id" == "$artifact_id" && "$published_plugin_rev" == "$plugin_rev" ]]; then
+            echo "Artifact $artifact_id and plugins are already published. Nothing to update."
             echo "updated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -74,6 +78,22 @@ jobs:
           </html>
           EOF
           touch site/.nojekyll
+
+      - name: Add plugin repository
+        if: steps.artifact.outputs.updated == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git ls-remote --exit-code --heads "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" plugin-dist > /dev/null 2>&1; then
+            echo "No plugin-dist branch yet. Deploying the bundle only."
+            exit 0
+          fi
+          git clone --quiet --depth 1 --branch plugin-dist \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/plugin-dist
+          test -s /tmp/plugin-dist/index.json
+          cp /tmp/plugin-dist/index.json site/index.json
+          cp -r /tmp/plugin-dist/pool site/pool
+          git -C /tmp/plugin-dist rev-parse HEAD > site/plugin-rev.txt
 
       - name: Configure GitHub Pages
         if: steps.artifact.outputs.updated == 'true'
