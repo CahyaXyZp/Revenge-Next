@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "name": "Next Plugins",
+  "description": "Server and channel quality-of-life plugins for Revenge Next.",
+  "plugins": {
+    "cahyaxyzp.server-tweaks": {
+      "name": "Server Tweaks",
+      "description": "Small quality-of-life tweaks for servers and channels. Adds a Copy Channel Name button to the channel long-press menu.",
+      "author": "CahyaXyZp",
+      "icon": "CopyIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://raw.githubusercontent.com/CahyaXyZp/Revenge-Next/plugin-dist/pool/cahyaxyzp.server-tweaks@1.0.0.zip",
+          "sha256": "504f9e3a946cb94ffdd969f52003685d323b74d74fe41912dc821bc9001499ca",
+          "size": 1539,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    }
+  }
+}
