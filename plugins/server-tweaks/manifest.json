@@ -2,10 +2,10 @@
 	"format": 1,
 	"id": "cahyaxyzp.server-tweaks",
 	"name": "Server Tweaks",
-	"description": "Small quality-of-life tweaks for servers and channels. Adds a Copy Channel Name button to the channel long-press menu.",
+	"description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu.",
 	"author": "CahyaXyZp",
 	"icon": "CopyIcon",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"dependencies": {
 		"revenge.api": {
 			"version": ">=1 <2"

@@ -1,4 +1,4 @@
-import { registerCopyChannelName } from './features/copy-channel-name'
+import { registerCopyChannelInfo } from './features/copy-channel-info'
 import { patchActionSheet } from './patches/actionsheet'
 
 export default plugin({
@@ -7,6 +7,6 @@ export default plugin({
 		patchActionSheet(cleanup)
 
 		// Features. Each one registers its own action sheet patch and cleans up after itself.
-		registerCopyChannelName(cleanup)
+		registerCopyChannelInfo(cleanup)
 	},
 })

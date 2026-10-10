@@ -26,8 +26,13 @@ https://cahyaxyzp.github.io/Revenge-Next
 
 Small quality-of-life tweaks for servers and channels.
 
-- **Copy Channel Name**: adds a button to the channel long-press menu (text, voice, announcement
-  channels, threads and forum posts) that copies the channel name.
+Adds these rows to the channel long-press menu. They sit in the same group as Discord's own
+"Copy Channel ID" row (or in the last group when developer mode is off):
+
+- **Copy Channel Name**: text, announcement and forum channels, threads and forum posts.
+- **Copy Voice Name**: voice and stage channels.
+- **Copy Category Name**: channel categories.
+- **Copy Channel Description**: channels that have a topic.
 
 ## How publishing works
 
@@ -53,7 +58,8 @@ plugins/
     └── js/
         ├── index.ts                      plugin entry
         ├── patches/actionsheet.ts        hooks Discord's long-press menus
-        └── features/copy-channel-name.tsx
+        ├── patches/add-rows.tsx          puts rows next to Discord's own rows
+        └── features/copy-channel-info.tsx
 .github/
 ├── scripts/build-plugins.sh              build + zip + index for one run
 ├── scripts/publish-plugin-branch.sh      adds new zips to plugin-dist
@@ -71,7 +77,8 @@ script. Every plugin under `plugins/` is built and listed in the same repository
 
 Create `js/features/<name>.tsx` that exports a `register...(cleanup)` function and call it from
 `js/index.ts`. To add a row to a long-press menu, call
-`registerActionSheetPatch(key, (groups, props) => { ... })` as `copy-channel-name.tsx` does.
+`registerActionSheetPatch(key, (groups, props) => { ... })` and `addRowsToSheet(groups, rows)` as
+`copy-channel-info.tsx` does.
 
 ## Build locally
 
