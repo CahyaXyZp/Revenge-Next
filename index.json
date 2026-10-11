@@ -3,115 +3,13 @@
   "name": "Next Plugins",
   "description": "Server and channel quality-of-life plugins for Revenge Next.",
   "plugins": {
-    "cahyaxyzp.bot-manager": {
-      "name": "Bot Manager",
-      "description": "Adds the Bots and Apps list from desktop to Server Settings > Integrations.",
-      "author": "CahyaXyZp",
-      "icon": "SettingsIcon",
-      "channels": {
-        "latest": "0.4.1"
-      },
-      "versions": {
-        "0.1.0": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.1.0.zip",
-          "sha256": "a9090e3a867b91561262050c50c404742bea730b6c81485842abf6d31f08e548",
-          "size": 2294,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.2.0": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.2.0.zip",
-          "sha256": "a4e7cf2947d6522f789ea21fc56b8a782394a5c0fb9f6bf29f7ed09b9dc52711",
-          "size": 2745,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.3.0": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.3.0.zip",
-          "sha256": "276405ebe04d910f8d3fb109e278d3df6edc3403235aa63c005aba7f7e9dd448",
-          "size": 5307,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.3.1": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.3.1.zip",
-          "sha256": "07fee3e60cec6faaf86b3270b09a7ee716788ed1ac5cbdeb5e6a4ea0b06e8105",
-          "size": 5547,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.3.2": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.3.2.zip",
-          "sha256": "847a330fbd815d081e161f2b2666ddd620af3ba1c4f590db213227d865d32a96",
-          "size": 5599,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.4.0": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.4.0.zip",
-          "sha256": "4e0a373785fabc0864a5060ad04d891e7fe3d196cd57ab73b3ae14d16f25a956",
-          "size": 7184,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "0.4.1": {
-          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.bot-manager@0.4.1.zip",
-          "sha256": "4f896978a8ea674e0489ecb8af7b1cc36695345d0149205c4961653e474b09b8",
-          "size": 7870,
-          "dependencies": {
-            "revenge.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        }
-      }
-    },
     "cahyaxyzp.server-tweaks": {
       "name": "Server Tweaks",
-      "description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu.",
+      "description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu, and brings the desktop Bots and Apps list with a Manage page (command permissions, bot permissions, webhooks, remove) to Server Settings > Integrations.",
       "author": "CahyaXyZp",
       "icon": "CopyIcon",
       "channels": {
-        "latest": "1.1.0"
+        "latest": "1.2.0"
       },
       "versions": {
         "1.0.0": {
@@ -131,6 +29,19 @@
           "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.server-tweaks@1.1.0.zip",
           "sha256": "66507c0a998355b18572ee63853d9ca454fd86e9e09e1ed1c5173f00371f11a9",
           "size": 1876,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.2.0": {
+          "url": "https://cahyaxyzp.github.io/Revenge-Next/pool/cahyaxyzp.server-tweaks@1.2.0.zip",
+          "sha256": "6815f6d983bc0a66e550455e1cace6c87a3c0327b8d0ca1db3bf89aaebcc677d",
+          "size": 8958,
           "dependencies": {
             "revenge.api": {
               "version": ">=1 <2"
