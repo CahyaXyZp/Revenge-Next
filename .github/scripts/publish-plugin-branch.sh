@@ -49,6 +49,20 @@ for zip in "$build"/pool/*.zip; do
     added=$((added + 1))
 done
 
+# Plugins listed in .github/retired-plugins.txt (one id per line) are removed from the pool, so
+# they disappear from index.json. Only ids named there are touched.
+if [ -f .github/retired-plugins.txt ]; then
+    while IFS= read -r id; do
+        id="${id//[[:space:]]/}"
+        [ -z "$id" ] && continue
+        for old in "$work"/pool/"$id"@*.zip; do
+            [ -e "$old" ] || continue
+            echo "Retiring $(basename "$old")"
+            git -C "$work" rm --quiet -f "pool/$(basename "$old")"
+        done
+    done < .github/retired-plugins.txt
+fi
+
 # generate-index reads repo.config.json from the working directory, so run this from the repo root.
 bun --bun run generate-index \
     --dist "$work/pool" \
