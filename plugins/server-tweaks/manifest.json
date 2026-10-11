@@ -2,10 +2,10 @@
 	"format": 1,
 	"id": "cahyaxyzp.server-tweaks",
 	"name": "Server Tweaks",
-	"description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu.",
+	"description": "Small quality-of-life tweaks for servers and channels. Adds Copy Channel Name, Copy Voice Name, Copy Category Name and Copy Channel Description to the channel long-press menu, and brings the desktop Bots and Apps list with a Manage page (command permissions, bot permissions, webhooks, remove) to Server Settings > Integrations.",
 	"author": "CahyaXyZp",
 	"icon": "CopyIcon",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"dependencies": {
 		"revenge.api": {
 			"version": ">=1 <2"

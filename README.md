@@ -24,7 +24,9 @@ https://cahyaxyzp.github.io/Revenge-Next
 
 ### Server Tweaks
 
-Small quality-of-life tweaks for servers and channels.
+Small quality-of-life tweaks for servers and channels. One plugin with two parts: the channel menu
+rows and the Bots and Apps manager. (Bot Manager used to be a separate plugin and is now part of
+it. Uninstall it if you still have it, or the section shows up twice.)
 
 Adds these rows to the channel long-press menu. They sit in the same group as Discord's own
 "Copy Channel ID" row (or in the last group when developer mode is off):
@@ -34,7 +36,7 @@ Adds these rows to the channel long-press menu. They sit in the same group as Di
 - **Copy Category Name**: channel categories.
 - **Copy Channel Description**: channels that have a topic.
 
-### Bot Manager
+#### Bots and Apps (Integrations)
 
 Brings **Bots and Apps** from the desktop app to **Server Settings > Integrations**. The section
 appears under Webhooks and Channels Followed, with a search field and one row per installed app.
@@ -67,26 +69,17 @@ The screen is found by the English labels "Webhooks" and "Channels Followed".
 
 ```
 plugins/
-├── bot-manager/
-│   ├── manifest.json
-│   └── js/
-│       ├── index.ts
-│       ├── features/integrations.tsx     hooks the Integrations screen
-│       ├── ui/gate.tsx                   list or Manage page
-│       ├── ui/apps-section.tsx           search field and app rows
-│       ├── ui/manage.tsx                 Manage page of one app
-│       └── lib/                          REST calls, permission bits, toast helpers
 └── server-tweaks/
     ├── manifest.json
     └── js/
         ├── index.ts                      plugin entry
         ├── patches/actionsheet.ts        hooks Discord's long-press menus
         ├── patches/add-rows.tsx          puts rows next to Discord's own rows
-        └── features/copy-channel-info.tsx
-.github/
-├── scripts/build-plugins.sh              build + zip + index for one run
-├── scripts/publish-plugin-branch.sh      adds new zips to plugin-dist
-└── workflows/build-plugins.yml
+        ├── features/copy-channel-info.tsx
+        └── bot-manager/                  Bots and Apps on Server Settings > Integrations
+            ├── features/integrations.tsx hooks the Integrations screen
+            ├── ui/                       list, Manage page, permission editor, transitions
+            └── lib/                      REST calls, permission bits, toast and back helpers
 ```
 
 ## Adding a plugin
