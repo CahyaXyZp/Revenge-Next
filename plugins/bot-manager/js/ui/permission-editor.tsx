@@ -2,8 +2,10 @@ import { Design } from '@revenge-mod/discord/design'
 import { Stores } from '@revenge-mod/discord/flux'
 import { React, ReactNative } from '@revenge-mod/react'
 import { savePermissions } from '../lib/api'
+import { useBackHandler } from '../lib/back'
 import { decrement } from '../lib/permissions'
 import { toast } from '../lib/toast'
+import Transition from './transition'
 import type { PermissionEntry } from '../lib/api'
 
 export type Entry = PermissionEntry & {
@@ -29,6 +31,8 @@ type Props = {
 	withDefaults: boolean
 	roles: any[]
 	names: Names
+	/** Discord's own back button closes this page, so no Cancel row is needed. */
+	nativeBack: boolean
 	onClose: () => void
 	onSaved: () => void
 }
@@ -39,7 +43,7 @@ const MUTED = '#8E9297'
 
 const CHANNEL_TYPES = [0, 2, 5, 13, 15, 16]
 
-function listChannels(guildId: string): Array<{ id: string; label: string }> {
+export function listChannels(guildId: string): Array<{ id: string; label: string }> {
 	try {
 		const map = (Stores.ChannelStore as any)?.getMutableGuildChannelsForGuild?.(guildId) ?? {}
 		return (Object.values(map) as any[])
@@ -70,7 +74,7 @@ function Note(props: { children: string }) {
 }
 
 /** The Deny / Allow buttons at the end of a row. */
-function Choice(props: { allowed: boolean; onChange: (allowed: boolean) => void; onRemove?: () => void }) {
+export function Choice(props: { allowed: boolean; onChange: (allowed: boolean) => void; onRemove?: () => void }) {
 	const { View, Pressable, Text } = ReactNative
 
 	const button = (value: boolean, mark: string, color: string) => (
@@ -106,15 +110,63 @@ function Choice(props: { allowed: boolean; onChange: (allowed: boolean) => void;
 	)
 }
 
-type Item = { id: string; type: 1 | 2 | 3; label: string }
+export type Item = { id: string; type: 1 | 2 | 3; label: string }
+
+/** What can still be added: roles or channels that have no entry yet. */
+export function buildItems(
+	kind: 'roles' | 'channels',
+	entries: Array<{ id: string; type: number }>,
+	guildId: string,
+	roles: any[],
+): Item[] {
+	const taken = (type: number) => new Set(entries.filter(entry => entry.type === type).map(entry => entry.id))
+
+	return kind === 'roles'
+		? roles
+				.filter(role => role.id !== guildId && !taken(1).has(String(role.id)))
+				.sort((a, b) => b.position - a.position)
+				.map(role => ({ id: String(role.id), type: 1 as const, label: String(role.name) }))
+		: listChannels(guildId)
+				.filter(channel => !taken(3).has(channel.id))
+				.map(channel => ({ ...channel, type: 3 as const }))
+}
+
+/** One entry as a row, with its Deny / Allow buttons. */
+export function EntryRow(props: {
+	label: string
+	entry: Entry
+	removable: boolean
+	onSet: (entry: Entry, allowed: boolean) => void
+	onRemove: (entry: Entry) => void
+}) {
+	const { entry } = props
+
+	return (
+		<Design.TableRow
+			label={props.label}
+			subLabel={entry.permission ? '✓ Allowed' : '✗ Denied'}
+			onPress={() => props.onSet(entry, !entry.permission)}
+			trailing={
+				<Choice
+					allowed={entry.permission}
+					onChange={allowed => props.onSet(entry, allowed)}
+					onRemove={props.removable ? () => props.onRemove(entry) : undefined}
+				/>
+			}
+		/>
+	)
+}
 
 /** Pick several roles or channels to add. */
-function Picker(props: {
+export function Picker(props: {
 	title: string
 	items: Item[]
+	nativeBack: boolean
 	onAdd: (items: Item[]) => void
 	onCancel: () => void
 }) {
+	useBackHandler(props.onCancel)
+
 	const TextInput = Design.TextInput as any
 	const [query, setQuery] = React.useState('')
 	const [selected, setSelected] = React.useState<string[]>([])
@@ -122,6 +174,7 @@ function Picker(props: {
 	const shown = props.items.filter(item => item.label.toLowerCase().includes(query.trim().toLowerCase()))
 
 	return (
+		<Transition from="right">
 		<ReactNative.View style={{ paddingBottom: 48 }}>
 			<Heading>{props.title}</Heading>
 			<TextInput
@@ -156,14 +209,16 @@ function Picker(props: {
 						if (selected.length) props.onAdd(props.items.filter(item => selected.includes(item.id)))
 					}}
 				/>
-				<Design.TableRow label="Cancel" onPress={props.onCancel} />
+				{!props.nativeBack && <Design.TableRow label="Cancel" onPress={props.onCancel} />}
 			</Design.TableRowGroup>
 		</ReactNative.View>
+		</Transition>
 	)
 }
 
 /** Edits who can use a command (or all of an app's commands), and where. */
 export default function PermissionEditor(props: Props) {
+	useBackHandler(props.onClose)
 	const { View } = ReactNative
 	const Text = Design.Text as any
 	const everyoneChannels = decrement(props.guildId)
@@ -224,22 +279,11 @@ export default function PermissionEditor(props: Props) {
 	}
 
 	if (picker) {
-		const taken = (type: number) => new Set(entries.filter(entry => entry.type === type).map(entry => entry.id))
-
-		const items: Item[] =
-			picker === 'roles'
-				? props.roles
-						.filter(role => role.id !== props.guildId && !taken(1).has(String(role.id)))
-						.sort((a, b) => b.position - a.position)
-						.map(role => ({ id: String(role.id), type: 1 as const, label: String(role.name) }))
-				: listChannels(props.guildId)
-						.filter(channel => !taken(3).has(channel.id))
-						.map(channel => ({ ...channel, type: 3 as const }))
-
 		return (
 			<Picker
 				title={picker === 'roles' ? 'Add Roles' : 'Add Channels'}
-				items={items}
+				items={buildItems(picker, entries, props.guildId, props.roles)}
+				nativeBack={props.nativeBack}
 				onCancel={() => setPicker(null)}
 				onAdd={chosen => {
 					setEntries(list => [
@@ -257,26 +301,24 @@ export default function PermissionEditor(props: Props) {
 
 	const rows = (list: Entry[]) =>
 		list.map(entry => (
-			<Design.TableRow
+			<EntryRow
 				key={`${entry.type}-${entry.id}`}
 				label={labelOf(entry)}
-				subLabel={entry.permission ? '✓ Allowed' : '✗ Denied'}
-				onPress={() => set(entry, !entry.permission)}
-				trailing={
-					<Choice
-						allowed={entry.permission}
-						onChange={allowed => set(entry, allowed)}
-						onRemove={isDefault(entry) ? undefined : () => remove(entry)}
-					/>
-				}
+				entry={entry}
+				removable={!isDefault(entry)}
+				onSet={set}
+				onRemove={remove}
 			/>
 		))
 
 	return (
+		<Transition from="right">
 		<View style={{ paddingBottom: 48 }}>
-			<Design.TableRowGroup>
-				<Design.TableRow label="Cancel" onPress={props.onClose} />
-			</Design.TableRowGroup>
+			{!props.nativeBack && (
+				<Design.TableRowGroup>
+					<Design.TableRow label="Cancel" onPress={props.onClose} />
+				</Design.TableRowGroup>
+			)}
 
 			<View style={{ marginTop: 20 }}>
 				<Text variant="heading-xl/bold">{props.title}</Text>
@@ -309,5 +351,6 @@ export default function PermissionEditor(props: Props) {
 				/>
 			</Design.TableRowGroup>
 		</View>
+		</Transition>
 	)
 }

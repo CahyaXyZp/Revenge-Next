@@ -9,13 +9,17 @@ import {
 	fetchWebhooks,
 	formatDate,
 	removeIntegration,
+	savePermissions,
 } from '../lib/api'
+import { useBackHandler } from '../lib/back'
 import { decrement, splitPermissions } from '../lib/permissions'
 import { copy, toast } from '../lib/toast'
-import PermissionEditor from './permission-editor'
+import PermissionEditor, { buildItems, EntryRow, Picker } from './permission-editor'
+import type { Entry } from './permission-editor'
+import Transition from './transition'
 import type { AppInfo, Result } from '../lib/api'
 
-type Props = { app: AppInfo; guildId: string; onBack: () => void }
+type Props = { app: AppInfo; guildId: string; nativeBack: boolean; onBack: () => void }
 
 const GREEN = '#3BA55D'
 const RED = '#ED4245'
@@ -66,16 +70,6 @@ function Note(props: { children: string }) {
 const failure = (result: Result | undefined) =>
 	result && !result.ok ? result.error : undefined
 
-/** One permission entry as a row: who or where, and whether it is allowed. */
-function PermissionRow(props: { label: string; allowed: boolean; note?: string }) {
-	return (
-		<Design.TableRow
-			label={props.label}
-			subLabel={`${props.allowed ? '✓ Allowed' : '✗ Denied'}${props.note ? ` ${props.note}` : ''}`}
-		/>
-	)
-}
-
 function PermissionGrid(props: { title: string; names: string[]; color: string; mark: string }) {
 	const Text = Design.Text as any
 	const { View } = ReactNative
@@ -99,7 +93,9 @@ function PermissionGrid(props: { title: string; names: string[]; color: string; 
 }
 
 /** Manage page of one app: command permissions, bot permissions, webhooks and removal. */
-export default function ManageApp({ app, guildId, onBack }: Props) {
+export default function ManageApp({ app, guildId, nativeBack, onBack }: Props) {
+	useBackHandler(onBack)
+
 	const { View, Image } = ReactNative
 	const Text = Design.Text as any
 	const TextInput = Design.TextInput as any
@@ -109,6 +105,9 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 	const [removing, setRemoving] = React.useState(false)
 	const [editor, setEditor] = React.useState<{ commandId: string; title: string; subtitle?: string } | null>(null)
 	const [version, setVersion] = React.useState(0)
+	const [picking, setPicking] = React.useState<'roles' | 'channels' | null>(null)
+	const [dir, setDir] = React.useState<'left' | 'right'>('right')
+	const [appEntries, setAppEntries] = React.useState<Entry[] | null>(null)
 
 	const roles = useLoad(() => fetchRoles(guildId), [guildId])
 	const index = useLoad(() => fetchCommandIndex(guildId), [guildId])
@@ -135,26 +134,51 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 	const overrides = new Map<string, any>(entries.map(entry => [entry.id, entry]))
 
 	// Without an entry, the defaults apply: everyone, in every channel.
-	const roleRows: Array<{ label: string; allowed: boolean }> = []
-	const channelRows: Array<{ label: string; allowed: boolean }> = []
+	React.useEffect(() => {
+		if (!permissions?.ok) return
 
-	if (permissions?.ok) {
-		const list: any[] = appEntry?.permissions ?? []
+		const list: Entry[] = (appEntry?.permissions ?? []).map((entry: any) => ({ ...entry }))
+		if (!list.some(entry => entry.id === guildId))
+			list.unshift({ id: guildId, type: 1, permission: true, implicit: true })
+		if (!list.some(entry => entry.id === decrement(guildId)))
+			list.push({ id: decrement(guildId), type: 3, permission: true, implicit: true })
 
-		for (const item of list) {
-			if (item.type === 3) channelRows.push({ label: channelName(item.id), allowed: item.permission })
-			else
-				roleRows.push({
-					label: item.type === 2 ? userName(item.id) : roleName(item.id),
-					allowed: item.permission,
-				})
+		setAppEntries(list)
+	}, [permissions])
+
+	const labelOf = (entry: Entry) =>
+		entry.type === 3 ? channelName(entry.id) : entry.type === 2 ? userName(entry.id) : roleName(entry.id)
+
+	const isDefault = (entry: Entry) => entry.id === guildId || entry.id === decrement(guildId)
+
+	/** Applies a change on screen right away and saves it. Undone if Discord refuses it. */
+	const updateApp = async (next: Entry[]) => {
+		const previous = appEntries
+		setAppEntries(next)
+
+		const result = await savePermissions(
+			guildId,
+			app.id,
+			app.id,
+			next.filter(entry => !entry.implicit).map(({ id, type, permission }) => ({ id, type, permission })),
+		)
+
+		if (!result.ok) {
+			setAppEntries(previous)
+			toast(`Could not save: ${result.error}`, 'SettingsIcon')
 		}
-
-		if (!roleRows.some(row => row.label === '@everyone'))
-			roleRows.unshift({ label: '@everyone', allowed: true })
-		if (!channelRows.some(row => row.label === 'All Channels'))
-			channelRows.unshift({ label: 'All Channels', allowed: true })
 	}
+
+	const setAppPermission = (entry: Entry, permission: boolean) =>
+		appEntries &&
+		updateApp(
+			appEntries.map(other =>
+				other.id === entry.id && other.type === entry.type ? { ...other, permission, implicit: false } : other,
+			),
+		)
+
+	const removeAppEntry = (entry: Entry) =>
+		appEntries && updateApp(appEntries.filter(other => !(other.id === entry.id && other.type === entry.type)))
 
 	const commands: any[] =
 		index?.ok && Array.isArray(index.body?.application_commands)
@@ -198,6 +222,24 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 		}
 	}
 
+	if (picking && appEntries)
+		return (
+			<Picker
+				title={picking === 'roles' ? 'Add Roles' : 'Add Channels'}
+				items={buildItems(picking, appEntries, guildId, roleList)}
+				nativeBack={nativeBack}
+				onCancel={() => {
+					setDir('left')
+					setPicking(null)
+				}}
+				onAdd={chosen => {
+					setDir('left')
+					setPicking(null)
+					updateApp([...appEntries, ...chosen.map(item => ({ id: item.id, type: item.type, permission: true }))])
+				}}
+			/>
+		)
+
 	if (editor)
 		return (
 			<PermissionEditor
@@ -211,7 +253,11 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 				withDefaults={editor.commandId === app.id}
 				roles={roleList}
 				names={{ role: roleName, user: userName, channel: channelName }}
-				onClose={() => setEditor(null)}
+				nativeBack={nativeBack}
+				onClose={() => {
+					setDir('left')
+					setEditor(null)
+				}}
 				onSaved={() => setVersion(v => v + 1)}
 			/>
 		)
@@ -220,16 +266,19 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 	const TableIcon = (Design.TableRow as any).Icon
 
 	return (
+		<Transition from={dir}>
 		<View style={{ paddingBottom: 48 }}>
-			<Design.TableRowGroup>
-				<Design.TableRow
-					label="Back to Integrations"
-					icon={TableIcon && backIcon ? <TableIcon source={backIcon} /> : undefined}
-					onPress={onBack}
-				/>
-			</Design.TableRowGroup>
+			{!nativeBack && (
+				<Design.TableRowGroup>
+					<Design.TableRow
+						label="Back to Integrations"
+						icon={TableIcon && backIcon ? <TableIcon source={backIcon} /> : undefined}
+						onPress={onBack}
+					/>
+				</Design.TableRowGroup>
+			)}
 
-			<View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 24, gap: 12 }}>
+			<View style={{ flexDirection: 'row', alignItems: 'center', marginTop: nativeBack ? 8 : 24, gap: 12 }}>
 				{app.iconUrl && (
 					<Image source={{ uri: app.iconUrl }} style={{ width: 56, height: 56, borderRadius: 28 }} />
 				)}
@@ -264,7 +313,7 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 			</Design.TableRowGroup>
 
 			<Heading>Command Permissions</Heading>
-			<Note>Who can use this application's commands, and where.</Note>
+			<Note>Who can use this application's commands, and where. Changes save as you make them.</Note>
 
 			{failure(permissions) && (
 				<Design.TableRowGroup>
@@ -272,39 +321,57 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 				</Design.TableRowGroup>
 			)}
 
-			{permissions?.ok && (
+			{permissions?.ok && appEntries && (
 				<>
 					<View style={{ marginTop: 12 }}>
 						<Text variant="text-md/semibold">Roles & Members</Text>
 					</View>
 					<Design.TableRowGroup>
-						{roleRows.map(row => (
-							<PermissionRow key={row.label} label={row.label} allowed={row.allowed} />
-						))}
+						{appEntries
+							.filter(entry => entry.type !== 3)
+							.map(entry => (
+								<EntryRow
+									key={`${entry.type}-${entry.id}`}
+									label={labelOf(entry)}
+									entry={entry}
+									removable={!isDefault(entry)}
+									onSet={setAppPermission}
+									onRemove={removeAppEntry}
+								/>
+							))}
+						<Design.TableRow
+							label="Add Roles"
+							arrow
+							onPress={() => {
+								setDir('right')
+								setPicking('roles')
+							}}
+						/>
 					</Design.TableRowGroup>
 
 					<View style={{ marginTop: 12 }}>
 						<Text variant="text-md/semibold">Channels</Text>
 					</View>
 					<Design.TableRowGroup>
-						{channelRows.map(row => (
-							<PermissionRow key={row.label} label={row.label} allowed={row.allowed} />
-						))}
-					</Design.TableRowGroup>
-
-					<View style={{ height: 12 }} />
-					<Design.TableRowGroup>
+						{appEntries
+							.filter(entry => entry.type === 3)
+							.map(entry => (
+								<EntryRow
+									key={`${entry.type}-${entry.id}`}
+									label={labelOf(entry)}
+									entry={entry}
+									removable={!isDefault(entry)}
+									onSet={setAppPermission}
+									onRemove={removeAppEntry}
+								/>
+							))}
 						<Design.TableRow
-							label="Edit app permissions"
-							subLabel="Roles, members and channels"
+							label="Add Channels"
 							arrow
-							onPress={() =>
-								setEditor({
-									commandId: app.id,
-									title: 'Command Permissions',
-									subtitle: `All commands of ${app.name}`,
-								})
-							}
+							onPress={() => {
+								setDir('right')
+								setPicking('channels')
+							}}
 						/>
 					</Design.TableRowGroup>
 				</>
@@ -332,9 +399,10 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 						label={command.name}
 						subLabel={overrides.has(command.id) ? 'Custom permissions' : undefined}
 						arrow
-						onPress={() =>
+						onPress={() => {
+							setDir('right')
 							setEditor({ commandId: command.id, title: command.name, subtitle: 'Overrides for this command' })
-						}
+						}}
 					/>
 				))}
 			</Design.TableRowGroup>
@@ -393,5 +461,6 @@ export default function ManageApp({ app, guildId, onBack }: Props) {
 				<Design.TableRow label="Copy debug info" subLabel="For bug reports" onPress={debug} />
 			</Design.TableRowGroup>
 		</View>
+		</Transition>
 	)
 }

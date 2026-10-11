@@ -40,7 +40,7 @@ Brings **Bots and Apps** from the desktop app to **Server Settings > Integration
 appears under Webhooks and Channels Followed, with a search field and one row per installed app.
 Tap an app to open its Manage page:
 
-- Command permissions: roles and members, channels, and the app's commands. Tap "Edit app permissions" or a command to allow or deny roles and channels, add or remove them, and save.
+- Command permissions: roles and members, channels, and the app's commands. Toggle allow or deny right on the Manage page (saved at once), add or remove roles and channels, or tap a command to edit its own overrides. Discord's own back button returns from each page.
 - Bot: the granted and denied permissions of the bot's role.
 - Webhooks of the app.
 - Remove App, with a confirmation step.
